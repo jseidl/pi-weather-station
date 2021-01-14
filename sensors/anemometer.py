@@ -1,5 +1,4 @@
 import math
-import statistics
 
 from gpiozero import Button
 from datetime import datetime
@@ -13,32 +12,16 @@ CMS_IN_A_METER = 1000.0
 CMS_IN_A_MILE = 160934.0
 ADJUSTMENT_FACTOR = 1.8
 
-MEASUREMENTS_POOL_SIZE = 20
+class AnemometerSensor(TickCounterSensor):
 
-class AnemometerSensor(SensorBase):
+    name = "anemometer"
 
     def __init__(self, gpio_pin):
 
-        self.reset_counters(
-                
-        self.measurements = [0] * MEASUREMENTS_POOL_SIZE)
+        self.reset_counters()
 
         self.button = Button(gpio_pin)
         self.button.when_pressed = self.register_tick
-
-    def register_tick(self):
-        self.ticks += 1
-        self.logger.debug(f"Tick registered. Total ticks: {self.ticks}")
-
-    def reset_counters(self):
-        self.ticks = 0
-        self.timestamp = datetime.utcnow()
-
-    def add_measurement(self, measurement):
-
-        # Makeshift circular buffer
-        self.measurements.pop(0)
-        self.measurements.append(measurement)
 
     def get_measurements(self):
 
@@ -70,6 +53,6 @@ class AnemometerSensor(SensorBase):
 
         return {
             'current': measurement,
-            'gust': max(self.measurements),
-            'average': statistics.mean(self.measurements)
+            'max': self.max(),
+            'average': self.mean()
         }

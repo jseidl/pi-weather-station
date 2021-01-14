@@ -9,7 +9,7 @@ from .const import (
 
 class BME280Sensor(SensorBase):
 
-
+    name = "ambient"
     bus = None
 
     def __init__(self, smbus_port=DEFAULT_SMBUS_PORT, smbus_addr=DEFAULT_SMBUS_ADDR):
@@ -34,7 +34,7 @@ class BME280Sensor(SensorBase):
 
         measurements = {
             'humidity': bme280_data.humidity,
-            'pressure': bme280_data.pressure
+            'pressure': bme280_data.pressure,
             'ambient_temperature': bme280_data.temperature
         }
 
