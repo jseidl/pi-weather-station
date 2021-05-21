@@ -1,13 +1,17 @@
 from gpiozero import Button
 from datetime import datetime
 
-from .core.base import TickCounterSensor
+from piweatherstation.core.base import TickCounterSensor
 
 BUCKET_SIZE = 0.2794
 
 class RainfallSensor(TickCounterSensor):
 
-    def __init__(self, gpio_pin):
+    name = "rainfall"
+
+    def setup(self):
+
+        gpio_pin = 26
 
         self.reset_counters()
 
@@ -16,13 +20,13 @@ class RainfallSensor(TickCounterSensor):
 
     def get_measurements(self):
 
-        reading = self.ticks
+        reading = float(self.ticks.value * BUCKET_SIZE)
 
         self.add_measurement(reading)
         self.reset_counters()
 
         return {
-            'current': reading,
+            'current': self.last(),
             'max': self.max(),
             'average': self.mean()
         }

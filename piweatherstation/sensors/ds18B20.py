@@ -1,7 +1,7 @@
 import glob
 
-from .core.base import RetryableSensor
-from .const import (
+from piweatherstation.core.base import RetryableSensor
+from piweatherstation.const import (
     ONEWIRE_BASEDIR,
 )
 

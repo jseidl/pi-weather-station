@@ -3,7 +3,10 @@ import math
 from gpiozero import Button
 from datetime import datetime
 
-from .core.base import SensorBase
+from piweatherstation.core.base import TickCounterSensor
+
+# REMOVEME
+from piweatherstation.util.statistics import iqr, std_dev
 
 ANEMOMETER_RADIUS = 9.0 # CM
 SECONDS_IN_AN_HOUR = 3600
@@ -12,11 +15,14 @@ CMS_IN_A_METER = 1000.0
 CMS_IN_A_MILE = 160934.0
 ADJUSTMENT_FACTOR = 1.8
 
-class AnemometerSensor(TickCounterSensor):
+class WindSpeedSensor(TickCounterSensor):
 
-    name = "anemometer"
+    name = "windspeed"
+    _update_interval = 15
 
-    def __init__(self, gpio_pin):
+    def setup(self):
+
+        gpio_pin = 20
 
         self.reset_counters()
 
@@ -27,10 +33,10 @@ class AnemometerSensor(TickCounterSensor):
 
         time_now = datetime.utcnow()
 
-        measurement_duration = (time_now - self.timestamp).TotalSeconds
+        measurement_duration = (time_now - self.timestamp).total_seconds()
 
         circumference_cm = (2 * math.pi) * ANEMOMETER_RADIUS
-        rotations = self.ticks / 2.0
+        rotations = self.ticks.value / 2.0
         
         distance_cm = circumference_cm * rotations        
         speed_cm_per_sec = distance_cm / measurement_duration
@@ -46,13 +52,20 @@ class AnemometerSensor(TickCounterSensor):
         speed_mi_per_sec = distance_mi / measurement_duration
         speed_mi_per_hour = speed_mi_per_sec * SECONDS_IN_AN_HOUR
 
-        measurement = speed_mi_per_hour * ADJUSTMENT_FACTOR,
+        measurement = speed_mi_per_hour * ADJUSTMENT_FACTOR
 
         self.add_measurement(measurement)
         self.reset_counters()
 
         return {
-            'current': measurement,
+            'current': self.last(),
             'max': self.max(),
-            'average': self.mean()
+            'average': self.mean(),
+            # Debug stuff
+            'raw_samples': self.filtered_measurements(method=None),
+            'average_raw': self.mean(method=None),
+            'iqr_samples': self.filtered_measurements(method=iqr),
+            'iqr_mean': self.mean(method=iqr),
+            'stddev_samples': self.filtered_measurements(method=std_dev),
+            'stddev_mean': self.mean(method=std_dev),
         }

@@ -1,8 +1,8 @@
 import math
 from gpiozero import MCP3008
 
-from .core.base import RetryableSensor
-from .const import (
+from piweatherstation.core.base import RetryableSensor
+from piweatherstation.const import (
     BOARD_VREF,
     MEASUREMENTS_RETRY_MAX,
     MEASUREMENTS_RETRY_INTERVAL,
@@ -27,11 +27,11 @@ VOLT_ANGLE_MAP = {
     0.6: 337.5,
 }
 
-class WindSpeedSensor(RetryableSensor):
+class WindVaneSensor(RetryableSensor):
 
-    name = "windspeed"
+    name = "windvane"
 
-    def __init__(self, adc_channel=0):
+    def setup(self):
 
         self.adc = MCP3008(channel=0)
 
@@ -73,10 +73,18 @@ class WindSpeedSensor(RetryableSensor):
     def get_measurements(self):
 
         reading = self._retryable_read()
+        if reading not in VOLT_ANGLE_MAP.keys():
+            return
         wind_angle = VOLT_ANGLE_MAP[reading]
         self.add_measurement(wind_angle)
 
         return {
-            'current': wind_angle,
+            'current': self.last(),
+            'compass': self.degToCompass(self.last()),
             'average': self.mean()
         }
+
+    def degToCompass(self, num):
+        val=int((num/22.5)+.5)
+        arr=["N","NNE","NE","ENE","E","ESE", "SE", "SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"]
+        return arr[(val % 16)]
